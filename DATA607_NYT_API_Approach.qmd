@@ -1,0 +1,28 @@
+---
+title: "NYT Books API – Approach"
+author: "Muntasir"
+format: html
+editor: visual
+---
+
+## Selected API
+
+New York Times Books API - Advice, How-To & Miscellaneous
+
+## Research Query
+
+What self-help and personal development books rank highest on the New York Times Best Sellers list, and how long have they stayed popular ?
+
+## Methodology
+
+I hope to use the New York Times Books API to examine best-selling books in the Advice, How-To & Miscellaneous class, concentrating on self-help and personal developmental titles.
+
+I can make an NYT Developer account, store API key as an environment variable instead of coding it through R.
+
+Applying R, I will obtain contemporary best-seller rankings via Books APi and parse JSON respone using pakages like httr, jsonlite, dplyr. I plan to convert data into a tidy data frame having book titles, authors, and rankings, and publishers, and the amount of weeks every book has made an appearance.
+
+I plan to analyze the most popular self-help and personal development books and compare their longevity on the best-seller list. Amid data cleanig, I will acknowledge nested JSON fields, empty values, and variable types.
+
+I will gather the findings, complete analysis and code into a Quarto file.
+
+Potential endpoint: <https://api.nytimes.com/svc/books/v3/lists/current/advice-how-to-and-miscellaneous.json>

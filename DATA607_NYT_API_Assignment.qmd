@@ -1,0 +1,151 @@
+---
+title: "NYT Books API: Self-Help Best Sellers"
+format: html
+editor: visual
+---
+
+## Introduction
+
+The following project utilizes New York Times Books API analyze best-selling books in the Advice, How-To & Miscellaneous category, concentrating on self-help and personal development.
+
+Research query I'm answering is pinpointing which books rank highest, and how long have they stayed on the best-seller list ?
+
+## API Selection
+
+I chose New York Times Books API, with the endpoint being https://api.nytimes.com/svc/books/v3/lists/current/advice-how-to-and-miscellaneous.json
+
+The function of endpoint is to obtain the present best-seller rankings for the Advice, How-to & Miscellaneous category, which covers my desired genre.
+
+## API request
+
+We will use NY TIMES API to obtain the list.
+
+```{r}
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(tibble)
+library(knitr)
+```
+
+```{r}
+
+url <- "https://api.nytimes.com/svc/books/v3/lists/current/advice-how-to-and-miscellaneous.json"
+
+
+api_key <- Sys.getenv("NYT_API_KEY")
+
+response <- GET(
+  url,
+  query = list("api-key" = api_key)
+)
+
+status_code(response)
+```
+
+## Parsing the JSON Response
+
+```{r}
+
+json_text <- content(response, as = "text", encoding = "UTF-8")
+
+
+nyt_data <- fromJSON(json_text)
+
+
+names(nyt_data)
+```
+
+## Data Transformation
+
+The JSON response has nested book info within the results field. I plan to extract the book records and select the variables important to my research query.
+
+```{r}
+books_raw <- nyt_data$results$books
+
+names(books_raw)
+
+head(books_raw)
+```
+
+```{r}
+books_tidy <- books_raw %>%
+  as_tibble() %>%
+  select(
+    rank,
+    title,
+    author,
+    publisher,
+    weeks_on_list,
+    rank_last_week,
+    description
+  ) %>%
+  arrange(rank)
+
+print(books_tidy)
+
+glimpse(books_tidy)
+
+colSums(is.na(books_tidy))
+```
+
+## Data Cleaning 
+
+```{r}
+books_tidy <- books_tidy %>%
+  mutate(
+    description = na_if(trimws(description), "")
+  )
+
+colSums(is.na(books_tidy))
+```
+
+## Best-Seller Ranking Analysis 
+
+This portion outlines the 5 highest-ranked books and looks at the amount of weeks they have shown on the New York Times best-seller list.
+
+```{r}
+
+top_five <- books_tidy %>%
+  arrange(rank) %>%
+  slice_head(n = 5) %>%
+  select(rank, title, author, weeks_on_list)
+
+knitr::kable(top_five)
+```
+
+```{r}
+books_summary <- books_tidy %>%
+  summarise(
+    total_books = n(),
+    average_weeks = mean(weeks_on_list),
+    median_weeks = median(weeks_on_list),
+    longest_weeks = max(weeks_on_list)
+  )
+
+knitr::kable(books_summary, digits = 2)
+```
+
+```{r}
+
+longest_running <- books_tidy %>%
+  arrange(desc(weeks_on_list)) %>%
+  slice_head(n = 5) %>%
+  select(title, author, rank, weeks_on_list)
+
+knitr::kable(longest_running)
+```
+
+## Data Cleaning Findings
+
+THe NY Times Book API yielded data in JSON format with nested book records. I took the books from the results field and changed them into a tidy data frame implementing dplyr and tibble,
+
+Having selected 7 variables important to analysis: rank, title, author, publisher, weeks on the list, previous week's rank, and description. Every row represents one book.
+
+The beginning missing-value check produced zero missing values. But, some descriptions had empty strings, which were adjusted to NA to showcase missing info more precisely. The ranking variables were already stored as integers, removing the need for more type conversion.
+
+## Conclusion
+
+The NY Times Books API properly gave best-seller data from the Advice, How-To & Miscellaneous category. Parsing and cleaningthe JSON response allowed me to create a tidy data frame containing 10 books and seven variables.
+
+The analytical results showed that the present rankings don't actually reflect long-term popularity. For instance, "The Let Them Theory ranked 4th in spite of staying on the list for 96 weeks ! The category also included books outside the self-help-specific genre, which restricts conclusions about the personal development names.
